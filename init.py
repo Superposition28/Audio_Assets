@@ -97,7 +97,7 @@ def create_module_conf(module_name: str, project_ini_path: Path, mode: str) -> t
     }
     conf['Directories'] = {
         'AUDIO_SOURCE_DIR': "Modules/QBMS_TSG/GameFiles/USRDIR/Assets_1_Audio_Streams",
-        'AUDIO_TARGET_DIR': "Modules/Audio/GameFiles/Assets_1_Audio"
+        'AUDIO_TARGET_DIR': "Modules/Audio/GameFiles/Assets_1_Audio_Streams"
     }
     conf['Tools'] = {
         'vgmstream-cli': "vgmstream-cli.exe"

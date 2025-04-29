@@ -1,18 +1,34 @@
-
-from . import init
-from .Tools.process import Main
-from .Tools.process import setup
+"""This module runs the initialization, setup, and main process for the audio assets."""
 import time
+import sys
+import os
+from pathlib import Path
 
 def main() -> None:
-    init.main()
+    """Runs the initialization, setup, and main process for the audio assets."""
 
-    setup.main()
+    module_dir = Path(__file__).resolve().parent
 
-    time.sleep(15)
+    print("running module initialization")
+    # Initialize the module
+    init.main(module_dir)
 
-    Main.main()
+    print("running tool setup")
+    setup.main(module_dir)
+
+    exit(0)
+    
+    print("running main process")
+    Main.main(module_dir)
 
 
 if __name__ == "__main__":
+    import init
+    from Tools.process import Main
+    from Tools.process import setup
+
     main()
+else:
+    from . import init
+    from .Tools.process import Main
+    from .Tools.process import setup

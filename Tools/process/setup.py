@@ -1,3 +1,9 @@
+"""
+This script prepares the audio source directory for processing.
+It reads the source directory path from 'Audconf.ini' and organizes
+subdirectories within it into 'EN' (English) and 'Global' folders
+based on predefined lists, skipping specified language code directories.
+"""
 import sys
 import os
 import configparser
@@ -5,14 +11,17 @@ from pathlib import Path
 import shutil # Added import
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Global variables to store config values
+audio_source_dir = ""
+language_blacklist = set()
+global_dirs = set()
 
-def read_config(file_path: str) -> str:
+def read_config(file_path: str) -> None: # Return type changed to None
     """Reads and displays the contents of a configuration file."""
-    config = configparser.ConfigParser()
+    global audio_source_dir, language_blacklist, global_dirs # Declare globals
+    config = configparser.ConfigParser(allow_no_value=True)
 
-    # Construct the absolute path to the config file relative to this script's location
-    script_dir = Path(__file__).resolve().parent
-    configPath = script_dir / ".." / ".." / file_path # Go up two levels from process/
+    configPath = Path(file_path)
     print(f"Config file path: {configPath}")
 
     if not configPath.exists():
@@ -23,9 +32,24 @@ def read_config(file_path: str) -> str:
 
     print(f"Config file sections found: {config.sections()}")
 
-    global audio_source_dir
     # Use .get with fallback to the initial values if not found in config
-    audio_source_dir = config.get('Directories', 'AUDIO_SOURCE_DIR')
+    audio_source_dir = config.get('Directories', 'AUDIO_SOURCE_DIR', fallback="")
+
+    # Read LanguageBlacklist and GlobalDirs sections
+    if 'LanguageBlacklist' in config:
+        language_blacklist = set(config['LanguageBlacklist'].keys())
+        print(f"Loaded Language Blacklist: {language_blacklist}")
+    else:
+        print("Warning: [LanguageBlacklist] section not found in config.", file=sys.stderr)
+        language_blacklist = set() # Default to empty set
+
+    if 'GlobalDirs' in config:
+        global_dirs = set(config['GlobalDirs'].keys())
+        print(f"Loaded Global Dirs: {global_dirs}")
+    else:
+        print("Warning: [GlobalDirs] section not found in config.", file=sys.stderr)
+        global_dirs = set() # Default to empty set
+
 
     print(f"Using Audio Source Dir: {audio_source_dir}")
 
@@ -35,23 +59,10 @@ def read_config(file_path: str) -> str:
 
 def organize_source_directories():
     """Moves subdirectories in source_dir to 'EN' or 'Global' subdirectories, excluding language codes."""
-    global audio_source_dir
+    global audio_source_dir, language_blacklist, global_dirs # Use globals
     source_path = Path(audio_source_dir) # Use Path object for consistency
 
-    # Directories to be skipped entirely (language codes)
-    language_blacklist = {'IT', 'ES', 'FR'}
-
-    # Directories to be moved into the 'Global' folder
-    global_dirs = {
-        '80b_crow', 'amb_airc', 'amb_chao', 'amb_cour', 'amb_dung', 'amb_ext_',
-        'amb_fore', 'amb_fren', 'amb_gara', 'amb_int_', 'amb_mans', 'amb_nort',
-        'amb_riot', 'amb_shir', 'amb_vent', 'bin_rev0', 'brt_dino', 'brt_dior',
-        'brt_myst', 'brt_plan', 'brt_temp', 'bsh_air_', 'bsh_beac', 'bsh_figh',
-        'bsh_fire', 'bsh_ice_', 'bsh_vill', 'bsh__air', 'che_cart', 'che_cent',
-        'che_mark', 'che_mo_b', 'che_q_an', 'dod_aqua', 'dod_dock', 'gamehub_',
-        'gts_full', 'gts_seas', 'gts_stat', 'gts_subu', 'gts_vent', 'gts_viol',
-        'mtp_heav', 'mus_simp', 'sss_cont', 'sss_lab_', 'sss_mall'
-    }
+    # Removed hardcoded lists - now read from config
 
     en_dir_name = 'EN'
     en_dir_path = source_path / en_dir_name
@@ -94,14 +105,14 @@ def organize_source_directories():
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-def main() -> None:
+def main(module_dir: str) -> None:
     """Main function to run the setup process."""
-    # Read the config file and get the paths
-    read_config("Audconf.ini")
+    # Read the config file and get the paths and rules
+    read_config(os.path.join(module_dir, "Audconf.ini"))
 
-    # Organize the source directories
+    # Organize the source directories using config values
     organize_source_directories()
 
-    global audio_source_dir
+    global audio_source_dir # Access global for printing
     # Print the final paths for verification
     print(f"Final Audio Source Dir: {audio_source_dir}")

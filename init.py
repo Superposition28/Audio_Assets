@@ -89,6 +89,7 @@ def create_module_conf(module_name: str, project_ini_path: Path, mode: str, modu
 
     if not conf_path.exists():
         conf = configparser.ConfigParser(allow_no_value=True) # Allow keys without values for sets
+        conf.optionxform = str # Preserve key case
         conf['Config'] = {
             'module_name': module_name,
             'mode': mode,
@@ -132,6 +133,7 @@ def create_module_conf(module_name: str, project_ini_path: Path, mode: str, modu
     else:
         logger.info(f"Conf file already exists at {conf_path}")
         conf = configparser.ConfigParser(allow_no_value=True)
+        conf.optionxform = str # Preserve key case when reading
         conf.read(conf_path)
         return conf_path.resolve(), conf
 

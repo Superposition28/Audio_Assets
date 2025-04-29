@@ -30,13 +30,13 @@ This file contains the primary settings for the module:
     *   `mode`: `independent` or `module` (determined during initialization based on `project.ini` location).
     *   `project_ini_path`: Absolute path to the `project.ini` file.
 *   **`[Directories]`**
-    *   `audio_source_dir`: Relative or absolute path to the directory containing the raw audio files (e.g., extracted `.snu` files).
-    *   `audio_target_dir`: Relative or absolute path where the converted audio files (e.g., `.wav`) will be saved.
+    *   `AUDIO_SOURCE_DIR`: Relative or absolute path to the directory containing the raw audio files (e.g., extracted `.snu` files).
+    *   `AUDIO_TARGET_DIR`: Relative or absolute path where the converted audio files (e.g., `.wav`) will be saved.
 *   **`[Tools]`**
     *   `vgmstream-cli`: Name or path of the `vgmstream-cli` executable.
 *   **`[Extensions]`**
-    *   `source_ext`: The file extension of the source audio files (e.g., `.snu`).
-    *   `target_ext`: The desired file extension for the converted audio files (e.g., `.wav`).
+    *   `SOURCE_EXT`: The file extension of the source audio files (e.g., `.snu`).
+    *   `TARGET_EXT`: The desired file extension for the converted audio files (e.g., `.wav`).
 *   **`[LanguageBlacklist]`**
     *   Contains keys (directory names) that should be skipped during the setup phase (e.g., `IT`, `ES`, `FR`). The values are ignored.
 *   **`[GlobalDirs]`**
@@ -93,5 +93,5 @@ Audio_Assets/
 
 *   **`run.py`:** Orchestrates the execution flow: `init` -> `setup` -> `Main`.
 *   **`init.py`:** Finds or creates `project.ini`. Creates `Audconf.ini` with default values if it doesn't exist.
-*   **`Tools/process/setup.py`:** Reads `audio_source_dir`, `LanguageBlacklist`, and `GlobalDirs` from `Audconf.ini`. Moves subdirectories within the source directory into `EN` or `Global` subfolders based on the lists read from the config, skipping directories listed in the blacklist.
-*   **`Tools/process/Main.py`:** Reads configuration from `Audconf.ini`. Locates `vgmstream-cli`. Iterates through files matching `source_ext` in the `audio_source_dir`, converts them to `target_ext` using `vgmstream-cli`, and saves them to the `audio_target_dir`, preserving the relative directory structure. Skips conversion if the target file already exists.
+*   **`Tools/process/setup.py`:** Reads `AUDIO_SOURCE_DIR`, `LanguageBlacklist`, and `GlobalDirs` from `Audconf.ini`. Moves subdirectories within the source directory into `EN` or `Global` subfolders based on the lists read from the config, skipping directories listed in the blacklist.
+*   **`Tools/process/Main.py`:** Reads configuration from `Audconf.ini`. Locates `vgmstream-cli`. Iterates through files matching `SOURCE_EXT` in the `AUDIO_SOURCE_DIR`, converts them to `TARGET_EXT` using `vgmstream-cli`, and saves them to the `AUDIO_TARGET_DIR`, preserving the relative directory structure. Skips conversion if the target file already exists.

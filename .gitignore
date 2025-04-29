@@ -33,4 +33,5 @@ asset_mapping.json
 __pycache__/
 *.pyc
 
+Modules/
 

@@ -5,64 +5,27 @@ subdirectories within it into 'EN' (English) and 'Global' folders
 based on predefined lists, skipping specified language code directories.
 """
 import sys
-import os
 import configparser
 from pathlib import Path
-import shutil # Added import
+import shutil
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Global variables to store config values
-audio_source_dir = ""
-language_blacklist = set()
-global_dirs = set()
 
-def read_config(file_path: str) -> None: # Return type changed to None
-    """Reads and displays the contents of a configuration file."""
-    global audio_source_dir, language_blacklist, global_dirs # Declare globals
-    config = configparser.ConfigParser(allow_no_value=True)
-
-    configPath = Path(file_path)
-    print(f"Config file path: {configPath}")
-
-    if not configPath.exists():
-        print(f"Error: Configuration file not found at {configPath}", file=sys.stderr)
+def organize_source_directories(
+    audio_source_dir_str: str,
+    language_blacklist: set[str],
+    global_dirs: set[str]
+) -> None:
+    """Moves subdirectories in source_dir to 'EN' or 'Global' subdirectories, excluding language codes."""
+    if not audio_source_dir_str:
+        print("Error: AUDIO_SOURCE_DIR not provided or empty in config.", file=sys.stderr)
         sys.exit(1)
 
-    config.read(configPath)
+    source_path = Path(audio_source_dir_str).resolve()
 
-    print(f"Config file sections found: {config.sections()}")
-
-    # Use .get with fallback to the initial values if not found in config
-    audio_source_dir = config.get('Directories', 'AUDIO_SOURCE_DIR', fallback="")
-
-    # Read LanguageBlacklist and GlobalDirs sections
-    if 'LanguageBlacklist' in config:
-        language_blacklist = set(config['LanguageBlacklist'].keys())
-        print(f"Loaded Language Blacklist: {language_blacklist}")
-    else:
-        print("Warning: [LanguageBlacklist] section not found in config.", file=sys.stderr)
-        language_blacklist = set() # Default to empty set
-
-    if 'GlobalDirs' in config:
-        global_dirs = set(config['GlobalDirs'].keys())
-        print(f"Loaded Global Dirs: {global_dirs}")
-    else:
-        print("Warning: [GlobalDirs] section not found in config.", file=sys.stderr)
-        global_dirs = set() # Default to empty set
-
-
-    print(f"Using Audio Source Dir: {audio_source_dir}")
-
-
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-def organize_source_directories():
-    """Moves subdirectories in source_dir to 'EN' or 'Global' subdirectories, excluding language codes."""
-    global audio_source_dir, language_blacklist, global_dirs # Use globals
-    source_path = Path(audio_source_dir) # Use Path object for consistency
-
-    # Removed hardcoded lists - now read from config
+    if not source_path.is_dir():
+        print(f"Error: Audio source directory does not exist: {source_path}", file=sys.stderr)
+        sys.exit(1)
 
     en_dir_name = 'EN'
     en_dir_path = source_path / en_dir_name
@@ -71,48 +34,67 @@ def organize_source_directories():
     global_dir_path = source_path / global_dir_name
 
     # Create the 'EN' and 'Global' subdirectories if they don't exist
-    os.makedirs(en_dir_path, exist_ok=True)
-    os.makedirs(global_dir_path, exist_ok=True)
+    en_dir_path.mkdir(parents=True, exist_ok=True)
+    global_dir_path.mkdir(parents=True, exist_ok=True)
 
     print(f"Organizing directories in '{source_path}' into '{en_dir_path}' and '{global_dir_path}'...")
+
+    moved_count = 0
+    skipped_count = 0
+    error_count = 0
 
     for item in source_path.iterdir():
         if item.is_dir():
             # Skip the target directories themselves and language directories
-            if item.name == en_dir_name or item.name == global_dir_name or item.name in language_blacklist:
+            if item.name == en_dir_name or item.name == global_dir_name or item.name.lower() in language_blacklist:
                 print(f"Skipping directory: '{item.name}'")
+                skipped_count += 1
                 continue
 
-            # Check if the directory should go into 'Global'
-            if item.name in global_dirs:
-                target_path = global_dir_path / item.name
-                print(f"Moving '{item.name}' to '{target_path}'...")
-                try:
-                    shutil.move(str(item), str(target_path))
-                except Exception as e:
-                    print(f"Error moving directory {item.name} to Global: {e}", file=sys.stderr)
-            # Otherwise, move it to 'EN'
-            else:
-                target_path = en_dir_path / item.name
-                print(f"Moving '{item.name}' to '{target_path}'...")
-                try:
-                    shutil.move(str(item), str(target_path))
-                except Exception as e:
-                    print(f"Error moving directory {item.name} to EN: {e}", file=sys.stderr)
+            # Determine target directory
+            target_parent_path = global_dir_path if item.name in global_dirs else en_dir_path
+            target_path = target_parent_path / item.name
+
+            print(f"Moving '{item.name}' to '{target_path}'...")
+            try:
+                # Ensure target doesn't already exist
+                if target_path.exists():
+                     print(f"Warning: Target directory '{target_path}' already exists. Skipping move for '{item.name}'.", file=sys.stderr)
+                     skipped_count += 1
+                     continue
+                shutil.move(str(item), str(target_path))
+                moved_count += 1
+            except Exception as e:
+                print(f"Error moving directory {item.name} to {target_parent_path.name}: {e}", file=sys.stderr)
+                error_count += 1
 
     print("Directory organization complete.")
+    print(f"Moved: {moved_count}, Skipped: {skipped_count}, Errors: {error_count}")
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-def main(module_dir: str) -> None:
-    """Main function to run the setup process."""
-    # Read the config file and get the paths and rules
-    read_config(os.path.join(module_dir, "Audconf.ini"))
+def main(config: configparser.ConfigParser) -> None:
+    """Main function to run the setup process using the provided config."""
+    # Extract necessary info from the config object
+    audio_source_dir_str = config.get('Directories', 'AUDIO_SOURCE_DIR', fallback="")
 
-    # Organize the source directories using config values
-    organize_source_directories()
+    language_blacklist = set()
+    if config.has_section('LanguageBlacklist'):
+        language_blacklist = {key.lower() for key in config['LanguageBlacklist']}
+        print(f"Loaded Language Blacklist: {language_blacklist}")
+    else:
+        print("Warning: [LanguageBlacklist] section not found in config.", file=sys.stderr)
 
-    global audio_source_dir # Access global for printing
+    global_dirs = set()
+    if config.has_section('GlobalDirs'):
+        global_dirs = set(config['GlobalDirs'].keys())
+        print(f"Loaded Global Dirs: {global_dirs}")
+    else:
+        print("Warning: [GlobalDirs] section not found in config.", file=sys.stderr)
+
+    # Organize the source directories using extracted config values
+    organize_source_directories(audio_source_dir_str, language_blacklist, global_dirs)
+
     # Print the final paths for verification
-    print(f"Final Audio Source Dir: {audio_source_dir}")
+    print(f"Setup operated on Audio Source Dir: {audio_source_dir_str}")

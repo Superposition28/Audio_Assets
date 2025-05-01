@@ -69,7 +69,7 @@ Audio_Assets/
 |		        └── Global/
 │
 ├── Modules/   ||   ../Modules/           # Location of source files (defined in Audconf.ini), depending on mode
-│   └── QBMS_TSG/
+│   └── Extract/
 │       └── GameFiles/
 │           └── USRDIR/
 │               └── Assets_1_Audio_Streams/ # Raw .snu files initially here

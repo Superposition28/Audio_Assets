@@ -76,7 +76,6 @@ def run(
         target_files = list(target_dir_full.rglob(f'*{tgt_ext}'))
         if not target_files:
             print(f"No {tgt_ext} files found in the target directory: {target_dir_full}")
-            return
         print(f"Found {len(target_files)} {tgt_ext} files.")
 
         if len(target_files) == len(source_files):

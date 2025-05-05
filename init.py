@@ -96,7 +96,7 @@ def create_module_conf(module_name: str, project_ini_path: Path, mode: str, modu
             'project_ini_path': str(project_ini_path)
         }
         conf['Directories'] = {
-            'AUDIO_SOURCE_DIR': "Modules/Extract/GameFiles/USRDIR/Assets_1_Audio_Streams",
+            'AUDIO_SOURCE_DIR': r"Source\USRDIR\Assets_1_Audio_Streams",
             'AUDIO_TARGET_DIR': "Modules/Audio/GameFiles/Assets_1_Audio_Streams"
         }
         conf['Tools'] = {

@@ -1,11 +1,11 @@
 """
 This script prepares the audio source directory for processing.
-It reads the source directory path from 'Audconf.ini' and organizes
+It reads the source directory path from 'project.json' and organizes
 subdirectories within it into 'EN' (English) and 'Global' folders
 based on predefined lists, skipping specified language code directories.
 """
 import sys
-import configparser
+import json
 from pathlib import Path
 import shutil
 
@@ -74,21 +74,35 @@ def organize_source_directories(
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-def main(config: configparser.ConfigParser) -> None:
+def main(project_dir) -> None:
     """Main function to run the setup process using the provided config."""
+    # Load the configuration from the project.json file
+    config_path = Path(project_dir) / 'project.json'
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: project.json not found in {project_dir}", file=sys.stderr)
+        sys.exit(1)
+    except json.JSONDecodeError:
+        print(f"Error: Could not parse project.json in {project_dir}", file=sys.stderr)
+        sys.exit(1)
+
     # Extract necessary info from the config object
-    audio_source_dir_str = config.get('Directories', 'AUDIO_SOURCE_DIR', fallback="")
+    audio_source_dir_str = config.get('Audio', {}).get('Directories', {}).get('AUDIO_SOURCE_DIR', "")
 
     language_blacklist = set()
-    if config.has_section('LanguageBlacklist'):
-        language_blacklist = {key.lower() for key in config['LanguageBlacklist']}
+    language_blacklist_config = config.get('Audio', {}).get('LanguageBlacklist', {})
+    if language_blacklist_config:
+        language_blacklist = {key.lower() for key in language_blacklist_config}
         print(f"Loaded Language Blacklist: {language_blacklist}")
     else:
         print("Warning: [LanguageBlacklist] section not found in config.", file=sys.stderr)
 
     global_dirs = set()
-    if config.has_section('GlobalDirs'):
-        global_dirs = set(config['GlobalDirs'].keys())
+    global_dirs_config = config.get('Audio', {}).get('GlobalDirs', {})
+    if global_dirs_config:
+        global_dirs = set(global_dirs_config.keys())
         print(f"Loaded Global Dirs: {global_dirs}")
     else:
         print("Warning: [GlobalDirs] section not found in config.", file=sys.stderr)

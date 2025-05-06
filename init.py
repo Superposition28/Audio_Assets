@@ -34,7 +34,6 @@ def generate_empty_config(file_path: str | Path) -> None:
 
     logger.info(f"Default configuration file created at {file_path}")
 
-
 def find_or_create_project_ini(module_dir: Path) -> tuple[Path, str]:
     """
     Finds or creates a 'project.ini' file in the specified directory or its parent directories.
@@ -70,7 +69,6 @@ def find_or_create_project_ini(module_dir: Path) -> tuple[Path, str]:
         logger.info(f"Found project.ini at {project_ini}")
 
     return project_ini.resolve(), mode
-
 
 def create_module_conf(module_name: str, project_ini_path: Path, mode: str, module_dir) -> tuple[Path, configparser.ConfigParser]:
     """
@@ -136,7 +134,6 @@ def create_module_conf(module_name: str, project_ini_path: Path, mode: str, modu
         conf.optionxform = str # Preserve key case when reading
         conf.read(conf_path)
         return conf_path.resolve(), conf
-
 
 def main(module_dir: Path) -> None:
     """Main function to initialize the Audio module."""
